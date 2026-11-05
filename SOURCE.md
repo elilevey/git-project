@@ -7,7 +7,7 @@ Apple publishes a live chart of the most-played songs on Apple Music for each co
 - **Content:** The top 10 most-played songs for a country. For each song: chart position (order in the list), song name, artist name, release date, genres and a link to the song.
 - **URL:** `https://rss.marketingtools.apple.com/api/v2/<country>/music/most-played/10/songs.json`
   (for example `il` for Israel, `us` for the United States)
-- **Update frequency:** View counts change continuously. In a test on 5 Nov 2026, all 10 view counts had changed after about 25 minutes (e.g. 2,070,320 → 2,076,990), while the list of videos stayed the same.
+- **Update frequency:** Expected to update about once a day (to be confirmed by comparing samples taken at different times).
 - **Expected sample size:** About 6.5 KB per country per download. Collecting every hour for two countries over the semester comes to roughly 30 MB.
 - **Key/password required:** No.
 - **Notes:** While testing, the feed once returned a `504 Gateway Time-out` HTML page instead of JSON. The collection script will need to check that each download is valid JSON before saving it.
@@ -32,7 +32,7 @@ The YouTube Data API returns the music videos currently trending in a country, t
 
 - **Content:** The top 10 trending music videos for a country. For each video: video ID, title, channel (usually the artist), publish date, view count, like count and comment count.
 - **URL:** `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&videoCategoryId=10&regionCode=IL&maxResults=10&fields=items(id,snippet(title,channelTitle,publishedAt),statistics)&key=API_KEY`
-- **Update frequency:** View, like and comment counts change continuously; the list of trending videos changes during the day (to be confirmed by comparing samples).
+- **Update frequency:** View counts change continuously. In a test on 5 Nov 2026, all 10 view counts had changed after about 25 minutes (e.g. 2,070,320 → 2,076,990), while the list of videos stayed the same.
 - **Expected sample size:** About 80 KB for the full response, reduced to about 4 KB by requesting only the needed fields with the `fields` parameter. Collecting every hour for two countries over the semester comes to roughly 20 MB.
 - **Key/password required:** Yes, a free YouTube Data API key from Google Cloud. It is stored outside the project folder with `chmod 600` and is never committed.
 - **Sample** (Israel, shortened):
