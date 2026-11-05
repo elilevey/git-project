@@ -7,7 +7,7 @@ Apple publishes a live chart of the most-played songs on Apple Music for each co
 - **Content:** The top 10 most-played songs for a country. For each song: chart position (order in the list), song name, artist name, release date, genres and a link to the song.
 - **URL:** `https://rss.marketingtools.apple.com/api/v2/<country>/music/most-played/10/songs.json`
   (for example `il` for Israel, `us` for the United States)
-- **Update frequency:** Expected to update about once a day (to be confirmed by comparing samples taken at different times).
+- **Update frequency:** View counts change continuously. In a test on 5 Nov 2026, all 10 view counts had changed after about 25 minutes (e.g. 2,070,320 → 2,076,990), while the list of videos stayed the same.
 - **Expected sample size:** About 6.5 KB per country per download. Collecting every hour for two countries over the semester comes to roughly 30 MB.
 - **Key/password required:** No.
 - **Notes:** While testing, the feed once returned a `504 Gateway Time-out` HTML page instead of JSON. The collection script will need to check that each download is valid JSON before saving it.
