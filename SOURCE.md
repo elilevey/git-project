@@ -2,7 +2,7 @@
 
 ## Proposal 1: Hacker News – from "new" to the front page
 
-Hacker News is a well-known tech news site where users post links and vote them up. Every post starts in the "new" list, and only some reach the front page, where the ranking keeps changing all day. The site only shows the current ranking, so the path each post takes (when it reached the front page, how high it climbed and how long it stayed) is lost unless it is collected. Collecting both lists regularly would show which new posts make it to the front page, how long that takes, and whether AI-related posts make it more often or stay longer than other topics.
+Hacker News is a well-known tech news site where users post links and vote them up. Every post starts in the "new" list, and only a small share ever reaches the front page. The site only shows the current lists, so which new posts made it, and how long it took them, is lost unless it is collected. Collecting both lists regularly would show what share of new posts reach the front page, how long that takes, and whether AI-related posts are more likely to make it than posts on other topics.
 
 - **Content:** Two lists of post IDs in ranked order: the front page (`topstories`) and the newest posts (`newstories`). For the top posts of each list, the post details: title, score, number of comments, author, time posted and the linked URL.
 - **URLs:**
@@ -14,6 +14,7 @@ Hacker News is a well-known tech news site where users post links and vote them 
 - **Expected sample size:** About 4.5 KB for each list, plus about 0.4 KB per post for details. Fetching both lists and the details of the top 30 posts in each comes to about 33 KB per sample. Collecting every 30 minutes over the semester comes to roughly 160 MB, under the 500 MB limit.
 - **Key/password required:** No. It is HN's official public API.
 - **Notes:** Post times are Unix timestamps (UTC). The API returns the current state only; historical ranking is not available from it.
+- **Relation to the course ideas list:** This is inspired by idea #9 (the Hacker News front page), but asks a different question: idea #9 looks at which posts survive on the front page, while this proposal looks at which new posts get onto it in the first place, and focuses on AI-related posts.
 - **Sample** (front page, shortened):
 
 ```json
