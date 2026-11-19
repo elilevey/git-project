@@ -85,6 +85,4 @@ Assuming a semester of about 100 days (about 70 trading days).
 
 ## Note on samples
 
-## Note on samples
-
 The assignment asks for 4 samples from 4 different days. I started collecting on Thursday 19 Nov, so by the deadline this submission includes HN samples from 3 days (Thursday–Saturday) and stock samples from 2 (the US market is closed on Saturday). The fourth day will be added on Sunday.
