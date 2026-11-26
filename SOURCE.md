@@ -10,15 +10,39 @@ Research question: when a public company's post reaches the Hacker News front pa
 | URL | `https://hacker-news.firebaseio.com/v0/topstories.json`<br>`https://hacker-news.firebaseio.com/v0/item/<id>.json` | `https://finnhub.io/api/v1/quote?symbol=<SYMBOL>&token=<KEY>` |
 | Documentation | https://github.com/HackerNews/API | https://finnhub.io/docs/api/quote |
 | Data format | JSON | JSON |
-| Key / username required | No | Yes, a free API key. Stored in an environment variable outside the repo and never committed. |
+| Key / username required | No | Yes, a free API key. Stored in `~/.finnhub_key` (outside the project, `chmod 600`) and never committed. |
 | License | Official public API provided by Y Combinator, free to use | Free tier for personal, non-commercial use; limited to 60 requests per minute |
-| Sampling frequency | Every 30 minutes | Every 30 minutes, during US market hours only (16:30–23:00 Israel time, Monday–Friday) |
+| Sampling frequency | Every 30 minutes (one run of `bin/collect.sh`; scheduled with cron from the next stage) | Same run as HN. Outside US market hours (14:30–21:00 UTC, Monday–Friday) the quote returns the last closing price |
 
 Finnhub was added following the staff's suggestion to check whether appearing on HN affects a company's stock price. It is marked as pending until approved.
 
 ## 2. What is collected
 
 From Hacker News, each sample saves the ranked list of front-page post IDs and the details of the top 30 posts (title, link, score, number of comments, author and posting time). From Finnhub, each sample saves the current quote for two market baselines, QQQ (NASDAQ-100, large companies) and IWM (Russell 2000, small companies), plus every public company whose site appears in that sample's front-page links.
+
+### File format
+
+Each run of `bin/collect.sh` saves **one file per sample**: `raw/YYYY-mm-dd/HHMM.json`, with the date and time in **UTC**. The file is built in a temporary folder and moved into `raw/` only once it is complete and validated, so `raw/` never holds a half-written sample. The file contains:
+
+| Field | Content |
+|---|---|
+| `sample_time` | Time of the sample, ISO 8601 UTC |
+| `hn_top` | The full front-page ranking from `topstories.json` (list of post IDs) |
+| `hn_items` | The details of the top 30 posts, as returned by `item/<id>.json` |
+| `quotes` | One Finnhub quote per ticker, with an added `symbol` field |
+
+Samples taken before 26 Nov 2026 were collected by hand in an earlier format: Israel time instead of UTC, and several files per sample (`HHMM_hn_top.json`, `HHMM_hn_items.json`, `HHMM_<SYMBOL>.json`). Since `raw/` is append-only, they were left as they are; `normalise.sh` will handle both formats.
+
+### Matching posts to companies: `tickers.csv`
+
+`tickers.csv` (in the project root) maps a company's domain to its stock ticker, with the header `Domain,Ticker`. A post matches a row if its domain **equals** the table's domain or **ends with a dot plus** that domain, so `investors.paloaltonetworks.com` matches `paloaltonetworks.com`, but `notpaloaltonetworks.com` does not.
+
+The table only lists sites where a public company talks about itself. Deliberately excluded:
+- **Platforms** owned by public companies but where anyone posts (`github.com`, `youtube.com`, `substack.com`, `wordpress.com`, `docs.google.com`): posts there are hosted by the company, not about it.
+- **News sites** (e.g. `reuters.com`): their articles are about other companies.
+- **Private companies** (e.g. `openai.com`, `databricks.com`): no stock price.
+
+The table is maintained by hand: new domains are reviewed periodically and added with a commit. **Limitation:** a company is only captured from the moment it is added to the table. Earlier samples have no quote for it, and missing quotes are not filled in afterwards.
 
 ## 3. Schema
 
@@ -62,27 +86,25 @@ Dropped fields: `kids` (comment IDs; the largest field and not needed, since `co
 | HN `item` | `descendants` | `comments` |
 | HN `item` | `by` | `author` |
 | HN `item` | `time` (Unix seconds) | `post_time` |
-| Finnhub `quote` | (from the request) | `symbol` |
+| Finnhub `quote` | `symbol` (added by `collect.sh`) | `symbol` |
 | Finnhub `quote` | `c` | `price` |
 | Finnhub `quote` | `pc` | `prev_close` |
 | Finnhub `quote` | `dp` | `change_pct` |
 | Finnhub `quote` | `t` (Unix seconds) | `quote_time` |
-| (file name) | date and time of the sample | `sample_time` |
+| sample file | `sample_time` (older samples: from the folder and file name, converted from Israel time to UTC) | `sample_time` |
 
 ## 6. Expected size
 
-Assuming a semester of about 100 days (about 70 trading days).
+Assuming a semester of about 100 days (about 70 trading days), with a sample every 30 minutes (48 a day).
 
 **`raw/`**
-- HN: about 23.5 KB per sample (4.5 KB list + 19 KB for 30 posts, measured on 19 Nov 2026). 48 samples a day × 100 days ≈ **113 MB**.
-- Finnhub: about 0.1 KB per quote, about 6 symbols per sample, 14 samples per trading day × 70 days ≈ 5,900 files, **under 1 MB** of data.
-- Total: about **115 MB**, under the 500 MB limit.
+- One sample file is about 34 KB (measured on 26 Nov 2026: front-page list, 30 posts and quotes). 48 samples a day × 100 days ≈ 4,800 files ≈ **163 MB**, under the 500 MB limit.
 
 **`dataset.csv`**
 - HN rows: 30 posts × 4,800 samples = 144,000 rows × about 150 bytes ≈ **22 MB**.
-- Stock rows: about 5,900 rows × about 60 bytes ≈ **0.4 MB**.
-- Total: about **22 MB**.
+- Stock rows: about 3 tickers per sample (QQQ, IWM and any matched company) × 4,800 samples ≈ 14,400 rows × about 60 bytes ≈ **0.9 MB**.
+- Total: about **23 MB**.
 
 ## Note on samples
 
-The assignment asks for 4 samples from 4 different days. I started collecting on Thursday 19 Nov, so by the deadline this submission includes HN samples from 3 days (Thursday–Saturday) and stock samples from 2 (the US market is closed on Saturday). The fourth day will be added on Sunday.
+Manual samples (old format): HN on 19, 20, 21 and 22 Nov 2026; stock quotes on 19, 20 and 24 Nov 2026 (the US market is closed on weekends, and the 23 Nov sample was missed). From 26 Nov 2026, samples are taken with `bin/collect.sh` in the format described above.
